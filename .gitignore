@@ -1,0 +1,8 @@
+bower_venv
+/bower_core/users/migrations
+/bower_core/users/__pycache__
+/bower_core/courses/migrations
+/bower_core/courses/__pycache__
+/bower_core/calendars/migrations
+/bower_core/calendars/__pycache__
+/bower_core/bower_core/__pycache__
