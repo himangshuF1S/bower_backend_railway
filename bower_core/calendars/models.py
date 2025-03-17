@@ -55,7 +55,7 @@ class Session(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_sessions")
     created_by_mentor = models.BooleanField(default=False)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="updated_sessions")
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, default="learning")
+    event_type = models.CharField(max_length=30, choices=EVENT_TYPE_CHOICES, default="learning")
 
     # Recurrence fields
     recurring_type = models.CharField(max_length=10, choices=RECURRING_CHOICES, default="none")
