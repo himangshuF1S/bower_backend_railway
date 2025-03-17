@@ -14,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         """Metadata for the UserSerializer."""
         model = User
-        ields = ["id", "email", "name", "first_name", "last_name", "phone_number", "created_at", "updated_at"]
+        fields = ["id", "email", "name", "first_name", "last_name", "phone_number", "created_at", "updated_at"]
 
 class LoginSerializer(serializers.Serializer):
     """
