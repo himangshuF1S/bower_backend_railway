@@ -161,9 +161,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # JWT Auth
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',  
-        'rest_framework.authentication.BasicAuthentication',  
-        'rest_framework.authentication.TokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # Keep JWT optional
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -188,4 +185,19 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
+}
+
+
+# settings.py
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Enter token with **Bearer** prefix, e.g., `Bearer <your-token>`",
+        }
+    },
+    "USE_SESSION_AUTH": False,  # Disable Django session auth in Swagger UI
 }

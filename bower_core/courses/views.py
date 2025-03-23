@@ -20,6 +20,8 @@ from .serializers import (
     PredefinedCourseBundleSerializer,
     CourseProgressSerializer,
 )
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 # ------------------------------
 # COURSE MANAGEMENT
@@ -27,25 +29,34 @@ from .serializers import (
 class CourseListView(generics.ListAPIView):
     """
     List all available courses.
-    
-    - **Permission**: Public (Anyone can view courses)
-    - **Response**: List of all courses with title, description, and mentors.
     """
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [permissions.AllowAny]
 
+    @swagger_auto_schema(
+        operation_summary="List all courses",
+        operation_description="Returns a list of all available courses.",
+        responses={200: CourseSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 class CourseDetailView(generics.RetrieveAPIView):
     """
     Retrieve details of a single course.
-    
-    - **Permission**: Public
-    - **Response**: Detailed course information.
     """
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [permissions.AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve a course",
+        operation_description="Fetch details of a specific course by its ID.",
+        responses={200: CourseSerializer()}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 # ------------------------------
 # ENROLLMENT MANAGEMENT
@@ -53,28 +64,35 @@ class CourseDetailView(generics.RetrieveAPIView):
 class EnrollInCourseView(APIView):
     """
     Enroll an authenticated user in a specific course.
-    
-    - **Permission**: Authenticated Users Only
-    - **Request**: Course ID in URL
-    - **Response**: Enrollment success message
     """
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_summary="Enroll in a course",
+        operation_description="Enroll the authenticated user in the specified course.",
+        responses={201: openapi.Response("Enrollment successful!")}
+    )
     def post(self, request, course_id):
         course = get_object_or_404(Course, id=course_id)
         enrollment, created = Enrollment.objects.get_or_create(user=request.user, course=course)
         return Response({"message": "Enrolled successfully!"}, status=status.HTTP_201_CREATED)
 
 
+
 class UserEnrollmentsView(generics.ListAPIView):
     """
     List all courses the authenticated user is enrolled in.
-    
-    - **Permission**: Authenticated Users Only
-    - **Response**: List of enrolled courses.
     """
     serializer_class = EnrollmentSerializer
     permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_summary="List user's enrolled courses",
+        operation_description="Retrieve all courses the authenticated user is enrolled in.",
+        responses={200: EnrollmentSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return Enrollment.objects.filter(user=self.request.user)
@@ -84,13 +102,36 @@ class UserEnrollmentsView(generics.ListAPIView):
 # ------------------------------
 class CourseBundleListCreateView(generics.ListCreateAPIView):
     """
-    List all user-created course bundles OR create a new bundle.
-    
-    - **Permission**: Authenticated Users Only
-    - **Response**: List of course bundles OR newly created bundle.
+    API endpoint for managing user-created course bundles.
     """
     serializer_class = CourseBundleSerializer
     permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_summary="List all user-created course bundles",
+        operation_description="""
+        **GET Method:**  
+        - Returns a list of course bundles created by the authenticated user.
+        - Requires authentication.
+        """,
+        responses={200: CourseBundleSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Create a new course bundle",
+        operation_description="""
+        **POST Method:**  
+        - Creates a new course bundle for the authenticated user.
+        - Requires authentication.
+        - Returns the newly created course bundle.
+        """,
+        responses={201: CourseBundleSerializer()},
+        request_body=CourseBundleSerializer
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
     def get_queryset(self):
         return CourseBundle.objects.filter(user=self.request.user)
@@ -98,16 +139,37 @@ class CourseBundleListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-
 class CourseBundleDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update, or delete a user's custom course bundle.
-    
-    - **Permission**: Bundle owner only.
-    - **Response**: Bundle details or update status.
     """
     serializer_class = CourseBundleSerializer
     permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve a course bundle",
+        operation_description="Fetch details of a specific course bundle by its ID.",
+        responses={200: CourseBundleSerializer()}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Update a course bundle",
+        operation_description="Modify an existing course bundle.",
+        responses={200: CourseBundleSerializer()},
+        request_body=CourseBundleSerializer
+    )
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Delete a course bundle",
+        operation_description="Remove an existing course bundle.",
+        responses={204: "Course bundle deleted successfully"}
+    )
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
     def get_queryset(self):
         return CourseBundle.objects.filter(user=self.request.user)
@@ -159,23 +221,32 @@ class CheckoutBundleView(APIView):
 class PredefinedBundleListView(generics.ListAPIView):
     """
     List all predefined mentor-curated course bundles.
-    
-    - **Permission**: Public (Anyone can view)
     """
     queryset = PredefinedCourseBundle.objects.filter(status="active")
     serializer_class = PredefinedCourseBundleSerializer
     permission_classes = [permissions.AllowAny]
 
+    @swagger_auto_schema(
+        operation_summary="List predefined course bundles",
+        operation_description="Retrieve all predefined mentor-curated course bundles.",
+        responses={200: PredefinedCourseBundleSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+
 
 class CheckoutPredefinedBundleView(APIView):
     """
     Checkout a predefined mentor-curated bundle (Enroll user).
-    
-    - **Permission**: Authenticated Users Only
-    - **Response**: Enrollment confirmation.
     """
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_summary="Checkout a predefined course bundle",
+        operation_description="Enroll the authenticated user in all courses of the selected predefined bundle.",
+        responses={200: openapi.Response("Enrolled in the predefined bundle")}
+    )
     def post(self, request, bundle_id):
         bundle = get_object_or_404(PredefinedCourseBundle, id=bundle_id, status="active")
 
@@ -189,7 +260,6 @@ class CheckoutPredefinedBundleView(APIView):
             Enrollment.objects.get_or_create(user=request.user, course=course)
 
         return Response({"message": "You are now enrolled in all courses in this bundle!"}, status=status.HTTP_200_OK)
-
 # ------------------------------
 # COURSE PROGRESS TRACKING
 # ------------------------------
