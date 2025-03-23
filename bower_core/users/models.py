@@ -8,54 +8,49 @@ class UserManager(BaseUserManager):
     Provides methods to create regular users and superusers.
     """
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, email=None, phone_number=None, password=None, **extra_fields):
         """
-        Create and return a regular user with the given email and password.
+        Create and return a regular user with either an email or a phone number.
         """
-        if not email:
-            raise ValueError("The Email field must be set")
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        if not email and not phone_number:
+            raise ValueError("Either email or phone number must be set")
+
+        email = self.normalize_email(email) if email else None
+        user = self.model(email=email, phone_number=phone_number, **extra_fields)
         user.set_password(password)  # Hash the password
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
         """
-        Create and return a superuser with the given email and password.
+        Create and return a superuser with email and password.
         """
         extra_fields.setdefault("is_admin", True)
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(email=email, password=password, **extra_fields)
 
 class User(AbstractBaseUser):
     """
-    Custom User model with email authentication.
+    Custom User model with email or phone authentication.
 
     - Uses UUID as the primary key.
-    - Replaces Django's default username-based authentication with email.
-    - Includes fields for personal details and account status.
-    - Includes an optional phone number.
+    - Allows login via email or phone number.
+    - Includes personal details and account status.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True)
-    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, unique=True, blank=True, null=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)  # Optional phone number
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    is_mentor = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
-    objects = UserManager()  # Custom manager for user creation
+    objects = UserManager()
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["name"]
+    USERNAME_FIELD = "email"  # Default login field (can also use phone)
+    REQUIRED_FIELDS = []
 
     def __str__(self) -> str:
-        """
-        Return the user's email as the string representation.
-        """
-        return str(self.email)
+        return self.email if self.email else self.phone_number

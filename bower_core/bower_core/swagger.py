@@ -7,6 +7,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 # Renamed to SchemaViewInstance to follow naming conventions
@@ -21,7 +22,7 @@ SchemaViewInstance = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),  # Allows public access
-    authentication_classes=(BasicAuthentication, SessionAuthentication),  # Bypass JWT for docs
+    authentication_classes=(BasicAuthentication, SessionAuthentication, JWTAuthentication),  # Bypass JWT for docs
 )
 
 urlpatterns = [
