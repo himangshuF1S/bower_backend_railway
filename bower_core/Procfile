@@ -1,0 +1,1 @@
+web: gunicorn bower_core.wsgi --log-file -
